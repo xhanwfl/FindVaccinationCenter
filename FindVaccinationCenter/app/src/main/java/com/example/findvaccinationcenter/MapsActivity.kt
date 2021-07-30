@@ -17,6 +17,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -47,12 +48,10 @@ internal class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     var lm : LocationManager? = null
     var myLocationMarker : MarkerOptions? = null
     var myMarker : Marker? = null
-    var test : Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-
 
 
         //버튼이벤트
@@ -143,10 +142,7 @@ internal class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val isGPSEnabled : Boolean = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
         //매니페스트에 권한추가후 여기서 다시 한번 확인해야함
         if(Build.VERSION.SDK_INT >= 23 &&
-            ContextCompat.checkSelfPermission(
-                applicationContext,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            )
+            ContextCompat.checkSelfPermission(applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
                 this@MapsActivity,
@@ -156,18 +152,22 @@ internal class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }else{
             when{ //프로바이더 제공자 활성화 여부 체크
                 isGPSEnabled -> {
-                    val location =
-                        lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) // GPS 기반으로 위치를 찾음
-                    longitude = location?.longitude!!
-                    latitude = location?.latitude!!
-                    Log.d("=>", "GPS현재위치를 가져옵니다. longitude : ${longitude}, latitude : ${latitude}")
+                    val location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) // GPS 기반으로 위치를 찾음
+                    if(location!=null){
+                        longitude = location?.longitude!!
+                        latitude = location?.latitude!!
+                        Log.d("=>", "GPS현재위치를 가져옵니다. longitude : ${longitude}, latitude : ${latitude}")
 
-                    latlng = LatLng(longitude!!, latitude!!)
+                        latlng = LatLng(longitude!!, latitude!!)
 
-                    showCurrentLocation(latitude!!, longitude!!)
+                        showCurrentLocation(latitude!!, longitude!!)
+                    }else{
+                        Toast.makeText(applicationContext,"씨발널이네",Toast.LENGTH_LONG).show()
+                    }
+
                 }
                 else -> {
-                    Log.d("=>", "ㅅㅂ")
+                    Log.d("=>", "gps 호출 실패")
                 }
             }
             //몇초 간격과 몇미터를 이동했을시에 호출되는 부분 주기적으로 위치를 업데이트 하고 싶을 경우 사용
@@ -199,8 +199,12 @@ internal class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Add a marker in Sydney and move the camera
        // val myLocationMarker = MarkerOptions().position(latlng!!).title("basic location")
 
-        lm = getSystemService(Context.LOCATION_SERVICE)as LocationManager
-        getCurrentLocatioon(lm!!)
+        try{
+            lm = getSystemService(Context.LOCATION_SERVICE)as LocationManager
+
+        }finally{
+            getCurrentLocatioon(lm!!)
+        }
 
         latlng.let{
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng))
