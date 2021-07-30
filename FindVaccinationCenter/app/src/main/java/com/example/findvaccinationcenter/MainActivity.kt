@@ -20,10 +20,31 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         var handler = Handler()
         handler.postDelayed(Runnable {
-            var intent = Intent(this,MapsActivity::class.java)
-            startActivity(intent)
-            finish()
+            checkPermission()
         },2000)
+    }
+
+    fun checkPermission(){
+        var lm = getSystemService(Context.LOCATION_SERVICE)as LocationManager
+        val isGPSEnabled : Boolean = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        //매니페스트에 권한추가후 여기서 다시 한번 확인해야함
+        if(Build.VERSION.SDK_INT >= 23 &&
+            ContextCompat.checkSelfPermission(applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                0
+            )
+        }else{
+            when{
+                isGPSEnabled ->{
+                    var intent = Intent(this,MapsActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+            }
+        }
     }
 
 }
